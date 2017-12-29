@@ -30,6 +30,9 @@
         - libffi-dev
         - libgdbm3
         - libgdbm-dev
+        - sqlite3
+        - libsqlite3-dev
+        - nodejs
     - name: Download ruby-install
       become: no
       get_url:
@@ -72,12 +75,40 @@
         path: /home/deploy/.bashrc
         regexp: 'chruby.sh$'
         line: 'source /usr/local/share/chruby/chruby.sh'
+        insertbefore: BOF
     - name: Set ruby version for deploy user
       lineinfile:
         path: /home/deploy/.profile
         regexp: '^chruby'
         line: 'chruby ruby-2.5.0'
+    - name: Install bundler
+      become_user: deploy
+      command: 'chruby-exec ruby-2.5.0 -- gem install bundler'
+      args:
+        creates: /home/deploy/.gem/ruby/2.5.0/bin/bundle
     - name: Install nginx
       apt:
         name: nginx
         state: latest
+    - name: Upload nginx config
+      copy:
+        src: nginx_config
+        dest: /etc/nginx/sites-available/rails
+      notify:
+        - Restart nginx
+    - name: Disable default nginx config
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify:
+        - Restart nginx
+    - name: Enable nginx config
+      file:
+        src: /etc/nginx/sites-available/rails
+        dest: /etc/nginx/sites-enabled/rails
+        state: link
+      notify:
+        - Restart nginx
+  handlers:
+    - name: Restart nginx
+      service: name=nginx state=restarted
