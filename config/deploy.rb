@@ -4,6 +4,7 @@ lock "~> 3.10.1"
 set :application, "ansible_tutorial"
 set :repo_url, "git@github.com:heidar/ansible_tutorial.git"
 set :deploy_to, "/home/deploy/apps"
+append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets"
 set :chruby_ruby, 'ruby-2.5.0'
 
 # Default branch is :master
